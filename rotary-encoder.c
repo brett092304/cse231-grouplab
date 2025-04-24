@@ -15,6 +15,7 @@
  */
 
 #include <CowPi.h>
+#include "boards/rp2040.h"
 #include "interrupt_support.h"
 #include "rotary-encoder.h"
 
@@ -39,8 +40,10 @@ void initialize_rotary_encoder() {
 }
 
 uint8_t get_quadrature() {
-    ;
-    return 0;
+    cowpi_ioport_t *ioport = (cowpi_ioport_t *) 0xD0000000;
+	uint8_t a_wiper = ioport->input & (1 << A_WIPER_PIN);
+	uint8_t b_wiper = ioport->input & (1 << B_WIPER_PIN);
+    return a_wiper | (b_wiper << 1);
 }
 
 char *count_rotations(char *buffer) {
