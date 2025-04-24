@@ -2,8 +2,8 @@
  *
  * @file lock-controller.c
  *
- * @author Cale Sigerson
  * @author (STUDENTS -- TYPE YOUR NAME HERE)
+ * @author (Brett Johnson)
  *
  * @brief Code to implement the "combination lock" mode.
  *
