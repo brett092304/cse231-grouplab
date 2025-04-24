@@ -2,7 +2,7 @@
  *
  * @file rotary-encoder.c
  *
- * @author (STUDENTS -- TYPE YOUR NAME HERE)
+ * @author Cale Sigerson
  * @author (STUDENTS -- TYPE YOUR NAME HERE)
  *
  * @brief Code to control a servomotor.
