@@ -23,13 +23,16 @@
 #define SIGNAL_PERIOD_uS    (20000)
 
 static int volatile pulse_width_us;
+static int volatile timeUntilRise = SIGNAL_PERIOD_uS;
+static int volatile timeUntilFall = 0;
+static int volatile lastTimeSnapshot = 0;
 
 static void handle_timer_interrupt();
 
 void initialize_servo() {
     cowpi_set_output_pins(1 << SERVO_PIN);
     center_servo();
-//    register_periodic_timer_ISR(0, PULSE_INCREMENT_uS, handle_timer_interrupt);
+    register_periodic_timer_ISR(0, PULSE_INCREMENT_uS, handle_timer_interrupt);
 }
 
 char *test_servo(char *buffer) {
@@ -52,17 +55,33 @@ char *test_servo(char *buffer) {
 }
 
 void center_servo() {
-    ;
+    pulse_width_us = 1500;
 }
 
 void rotate_full_clockwise() {
-    ;
+    pulse_width_us = 500;
 }
 
 void rotate_full_counterclockwise() {
-    ;
+    pulse_width_us = 2500;
 }
 
 static void handle_timer_interrupt() {
-    ;
+    /*volatile cowpi_timer_t *timer = (cowpi_timer_t *)(0x40054000);
+    int timePassed = (timer->raw_lower_word) - lastTimeSnapshot;
+    if(timeUntilFall < 500 || timeUntilFall > 2500) {
+        timeUntilFall = pulse_width_us;
+    }
+    if(timeUntilRise <= 0) {
+        cowpi_set_output_pins(1 << SERVO_PIN);
+        timeUntilRise = SIGNAL_PERIOD_uS;
+        timeUntilFall = pulse_width_us;
+    }
+    if(timeUntilFall <= 0) {
+        cowpi_set_output_pins(0 << SERVO_PIN);
+    }
+    timeUntilRise -= timePassed;
+    timeUntilFall -= timePassed;*/
+    
+    
 }
