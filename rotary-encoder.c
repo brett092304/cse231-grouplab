@@ -53,8 +53,9 @@ char *count_rotations(char *buffer) {
 }
 
 direction_t get_direction() {
-    ;
-    return STATIONARY;
+    direction_t last_direction = direction;
+	direction = STATIONARY;
+    return last_direction;
 }
 
 static void handle_quadrature_interrupt() {
