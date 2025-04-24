@@ -37,6 +37,7 @@ void initialize_rotary_encoder() {
     cowpi_set_pullup_input_pins((1 << A_WIPER_PIN) | (1 << B_WIPER_PIN));
     ;
 //    register_pin_ISR((1 << A_WIPER_PIN) | (1 << B_WIPER_PIN), handle_quadrature_interrupt);
+	state = HIGH_HIGH;
 }
 
 uint8_t get_quadrature() {
@@ -47,8 +48,8 @@ uint8_t get_quadrature() {
 }
 
 char *count_rotations(char *buffer) {
-    ;
-    return buffer;
+	sprintf(buffer, "%d:CW %d:CCW", clockwise_count, counterclockwise_count);
+	return buffer;
 }
 
 direction_t get_direction() {
