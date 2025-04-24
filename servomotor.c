@@ -19,8 +19,8 @@
 #include "interrupt_support.h"
 
 #define SERVO_PIN           (22)
-#define PULSE_INCREMENT_uS  (INT32_MAX)
-#define SIGNAL_PERIOD_uS    (INT32_MAX)
+#define PULSE_INCREMENT_uS  (50)
+#define SIGNAL_PERIOD_uS    (20000)
 
 static int volatile pulse_width_us;
 
@@ -33,7 +33,21 @@ void initialize_servo() {
 }
 
 char *test_servo(char *buffer) {
-    ;
+    volatile cowpi_ioport_t *ioport = (cowpi_ioport_t *)(0xD0000000);
+    uint8_t leftButton = ioport->input & (1 << 2); // 1 is unpressed
+    uint8_t leftSwitch = !((ioport->input & (1 << 14)) != (1 << 14)); // 1 is right position
+    if(!leftButton) {
+        center_servo();
+        sprintf(buffer, "SERVO: center");
+    } else {
+        if(leftSwitch) {
+            rotate_full_counterclockwise();
+            sprintf(buffer, "SERVO: right");
+        } else {
+            rotate_full_clockwise();
+            sprintf(buffer, "SERVO: left");
+        }
+    }
     return buffer;
 }
 
