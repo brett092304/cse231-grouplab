@@ -36,7 +36,7 @@ static void handle_quadrature_interrupt();
 void initialize_rotary_encoder() {
     cowpi_set_pullup_input_pins((1 << A_WIPER_PIN) | (1 << B_WIPER_PIN));
     ;
-//    register_pin_ISR((1 << A_WIPER_PIN) | (1 << B_WIPER_PIN), handle_quadrature_interrupt);
+    register_pin_ISR((1 << A_WIPER_PIN) | (1 << B_WIPER_PIN), handle_quadrature_interrupt);
 	state = HIGH_HIGH;
 }
 
@@ -48,7 +48,7 @@ uint8_t get_quadrature() {
 }
 
 char *count_rotations(char *buffer) {
-	sprintf(buffer, "%d:CW %d:CCW", clockwise_count, counterclockwise_count);
+	sprintf(buffer, "CW:%-5d CCW:%-5d", clockwise_count, counterclockwise_count);
 	return buffer;
 }
 
@@ -61,5 +61,32 @@ direction_t get_direction() {
 static void handle_quadrature_interrupt() {
     static rotation_state_t last_state = UNKNOWN;
     uint8_t quadrature = get_quadrature();
-    ;
+	if (quadrature == 0x3) {
+		last_state = state;
+		state = HIGH_HIGH;
+	} else if (quadrature == 0x2) {
+	//	if (last_state == LOW_HIGH && state == LOW_LOW) {
+	//		direction = COUNTERCLOCKWISE;
+	//		counterclockwise_count++;
+	//	}
+		last_state = state;
+		state = HIGH_LOW;
+	} else if (quadrature == 0x1) {
+	//	if (last_state == HIGH_LOW && state == LOW_LOW) {
+	//		direction = CLOCKWISE;
+	//		clockwise_count++;
+	//	}
+		last_state = state;
+		state = LOW_HIGH;
+	} else if (quadrature == 0x0) {
+		if (last_state == HIGH_HIGH && state == HIGH_LOW) {
+			direction = CLOCKWISE;
+			clockwise_count++;
+		} else if (last_state == HIGH_HIGH && state == LOW_HIGH) {
+			direction = COUNTERCLOCKWISE;
+			counterclockwise_count++;
+		}
+		last_state = state;
+		state = LOW_LOW;
+	}
 }
