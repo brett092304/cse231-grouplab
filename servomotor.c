@@ -3,7 +3,7 @@
  * @file rotary-encoder.c
  *
  * @author (STUDENTS -- TYPE YOUR NAME HERE)
- * @author (STUDENTS -- TYPE YOUR NAME HERE)
+ * @author (Brett Johnson)
  *
  * @brief Code to control a servomotor.
  *

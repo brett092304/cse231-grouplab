@@ -3,7 +3,7 @@
  * @file lock-controller.c
  *
  * @author (STUDENTS -- TYPE YOUR NAME HERE)
- * @author (STUDENTS -- TYPE YOUR NAME HERE)
+ * @author (Brett Johnson)
  *
  * @brief Code to implement the "combination lock" mode.
  *
