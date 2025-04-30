@@ -42,9 +42,8 @@ void initialize_rotary_encoder() {
 
 uint8_t get_quadrature() {
     cowpi_ioport_t *ioport = (cowpi_ioport_t *) 0xD0000000;
-	uint8_t a_wiper = ioport->input & (1 << A_WIPER_PIN);
-	uint8_t b_wiper = ioport->input & (1 << B_WIPER_PIN);
-    return a_wiper | (b_wiper << 1);
+	uint32_t a_wiper = ioport->input & (3 << A_WIPER_PIN);
+    return a_wiper >> A_WIPER_PIN;
 }
 
 char *count_rotations(char *buffer) {
@@ -65,20 +64,12 @@ static void handle_quadrature_interrupt() {
 		last_state = state;
 		state = HIGH_HIGH;
 	} else if (quadrature == 0x2) {
-	//	if (last_state == LOW_HIGH && state == LOW_LOW) {
-	//		direction = COUNTERCLOCKWISE;
-	//		counterclockwise_count++;
-	//	}
 		last_state = state;
 		state = HIGH_LOW;
 	} else if (quadrature == 0x1) {
-	//	if (last_state == HIGH_LOW && state == LOW_LOW) {
-	//		direction = CLOCKWISE;
-	//		clockwise_count++;
-	//	}
 		last_state = state;
 		state = LOW_HIGH;
-	} else if (quadrature == 0x0) {
+	} else {
 		if (last_state == HIGH_HIGH && state == HIGH_LOW) {
 			direction = CLOCKWISE;
 			clockwise_count++;
