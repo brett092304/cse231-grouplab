@@ -15,6 +15,7 @@
  */
 
 #include <CowPi.h>
+#include "boards/rp2040.h"
 #include "display.h"
 #include "interrupt_support.h"
 #include "io/cowpi_io.h"
@@ -28,8 +29,23 @@ enum {
 };
 static bool started;
 
-static int system_status;
-static uint8_t working_combination[3] = {0, 0, 0};
+static volatile int system_status;
+static volatile uint8_t working_combination[3];
+
+void send_alarm() {
+	cowpi_timer_t *timer = (cowpi_timer_t *) 0x40054000;
+	while(1) {
+		display_string(0, "ALERT");
+		int now = timer->raw_lower_word;
+		while (timer->raw_lower_word > now - 250000U) {}
+		cowpi_illuminate_left_led();
+		cowpi_deluminate_right_led();
+		now = timer->raw_lower_word;
+		while(timer->raw_lower_word > now - 250000U) {}
+		cowpi_illuminate_right_led();
+		cowpi_deluminate_left_led();
+	}
+}
 
 void display_lock() {
 	char display_working_combination[16];
@@ -37,7 +53,13 @@ void display_lock() {
 	if (started && system_status == LOCKED) {
 		display_string(0, display_working_combination);
 	} else if (system_status == UNLOCKED) {
-		display_string(0, "Open");
+		display_string(0, "OPEN");
+	} else if (system_status == ALARMED) {
+		display_string(0, "ALERT");
+		display_string(1, "");
+		send_alarm();
+	} else {
+		display_string(0, "  -  -  ");
 	}
 }
 
@@ -51,24 +73,38 @@ void force_combination_reset() {
     combination[2] = 15;
 }
 
-void handle_left_button() {
-	bool is_valid_combination = true;
-	for (int i = 0; i < 3 && is_valid_combination; i++) {
-		if (working_combination[i] != combination[i]) {
-			is_valid_combination = false;
+void handle_left_button(void) {
+	if (cowpi_left_button_is_pressed()) {
+		static uint8_t warnings = 0;
+		bool is_valid_combination = false;
+		if (working_combination[0] == combination[0] &&
+			working_combination[1] == combination[1] &&
+			working_combination[2] == combination[2]) {
+			is_valid_combination = true;
 		}
-	}
 
-	if (is_valid_combination) {
-		system_status = UNLOCKED;
+		if (is_valid_combination) {
+			system_status = UNLOCKED;
+			for (int i = 0; i < 3; i++) {working_combination[i] = 0;}
+		} else {
+			warnings++;
+			char buffer[16];
+			sprintf(buffer, "bad try %d", warnings);
+			display_string(1, buffer);
+		}
+		
+		if (warnings > 2) {
+			system_status = ALARMED;
+		}
 	}
 }
 
 void initialize_lock_controller() {
+	force_combination_reset();
 	system_status = LOCKED;
 	started = false;
-	display_string(0, "  -  -  ");
-	register_pin_ISR((1 << 2), handle_left_button);
+	for (int i = 0; i < 3; i++) {working_combination[i] = 0;}
+	register_pin_ISR((1L << 2), handle_left_button);
 }
 
 uint8_t update_working_combination(uint8_t index, direction_t direction) {
