@@ -31,20 +31,22 @@ static bool started;
 
 static volatile int system_status;
 static volatile uint8_t working_combination[3];
+static volatile uint8_t combo_passes[3];
 
 void send_alarm() {
 	cowpi_timer_t *timer = (cowpi_timer_t *) 0x40054000;
-	while(1) {
+	// while(1) {
 		display_string(0, "ALERT");
-		int now = timer->raw_lower_word;
-		while (timer->raw_lower_word > now - 250000U) {}
+		display_string(1, "");
+		uint32_t then = timer->raw_lower_word;
+		while (timer->raw_lower_word - then < 2) {}
 		cowpi_illuminate_left_led();
 		cowpi_deluminate_right_led();
-		now = timer->raw_lower_word;
-		while(timer->raw_lower_word > now - 250000U) {}
+		then = timer->raw_lower_word;
+		while(timer->raw_lower_word - then < 2) {}
 		cowpi_illuminate_right_led();
 		cowpi_deluminate_left_led();
-	}
+	// }
 }
 
 void display_lock() {
@@ -55,8 +57,6 @@ void display_lock() {
 	} else if (system_status == UNLOCKED) {
 		display_string(0, "OPEN");
 	} else if (system_status == ALARMED) {
-		display_string(0, "ALERT");
-		display_string(1, "");
 		send_alarm();
 	} else {
 		display_string(0, "  -  -  ");
@@ -83,9 +83,13 @@ void handle_left_button(void) {
 			is_valid_combination = true;
 		}
 
+		if (!(combo_passes[0] > 2 && combo_passes[1] == 2 && combo_passes[2] == 1)) {
+			is_valid_combination = false;
+		}
+
 		if (is_valid_combination) {
 			system_status = UNLOCKED;
-			for (int i = 0; i < 3; i++) {working_combination[i] = 0;}
+			for (int i = 0; i < 3; i++) {working_combination[i] = 0; combo_passes[i] = 0;}
 		} else {
 			warnings++;
 			char buffer[16];
@@ -103,7 +107,7 @@ void initialize_lock_controller() {
 	force_combination_reset();
 	system_status = LOCKED;
 	started = false;
-	for (int i = 0; i < 3; i++) {working_combination[i] = 0;}
+	for (int i = 0; i < 3; i++) {working_combination[i] = 0; combo_passes[i] = 0;}
 	register_pin_ISR((1L << 2), handle_left_button);
 }
 
@@ -113,17 +117,24 @@ uint8_t update_working_combination(uint8_t index, direction_t direction) {
 		if (index == 1) {
 			index++;
 			working_combination[index] = working_combination[index - 1];
+			if (working_combination[index] == combination[1]) {combo_passes[1]++;}
+		} 
+		if (index == 2) {
+			if (working_combination[index] == combination[2]) {combo_passes[2]++;}
 		}
 		working_combination[index]++;
 		if (working_combination[index] > 15) {
 			working_combination[index] = 0;
 		}
-		return index;
+		if (working_combination[index] == combination[0]) {
+			combo_passes[0]++;
+		}
 	} else if (direction == COUNTERCLOCKWISE) {
 		started = true;
 		if (index == 0) {
 			index++;
 			working_combination[index] = working_combination[index - 1];
+			if (working_combination[index] == combination[1]) {combo_passes[1]++;}
 		} else if (index == 2) {
 			for (int i = 0; i < 3; i++) {
 				working_combination[i] = 0;
@@ -131,12 +142,16 @@ uint8_t update_working_combination(uint8_t index, direction_t direction) {
 			index = 0;
 			started = false;
 		}
+		if (index == 1 && working_combination[index] == combination[1]) {combo_passes[1]++;}
 		working_combination[index]--;
 		if (working_combination[index] > 15) {
 			working_combination[index] = 15;
 		}
-		return index;
+		if (working_combination[index] == combination[0]) {
+			combo_passes[0]++;
+		}
 	}
+
 	return index;
 }
 
@@ -145,6 +160,9 @@ void control_lock() {
     direction_t direction = get_direction();
 	working_index = update_working_combination(working_index, direction);
 	display_lock();
+	char passes_display[16];
+	sprintf(passes_display, "%d %d %d", combo_passes[0], combo_passes[1], combo_passes[2]);
+	display_string(3, passes_display);
 
 	if (system_status == LOCKED) {
 		cowpi_illuminate_left_led();
