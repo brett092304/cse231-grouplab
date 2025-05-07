@@ -213,7 +213,7 @@ void handle_right_button() {
 }
 
 void initialize_lock_controller() {
-	force_combination_reset();
+	//force_combination_reset();
 	system_status = LOCKED;
 	started = false;
 	reset_lock();
@@ -332,7 +332,6 @@ void control_lock() {
 		} else {
 			display_string(2, "No Change");
 			reentry_active = false;
-			working_index = 0;
 			reset_lock();
 		}
 	}
