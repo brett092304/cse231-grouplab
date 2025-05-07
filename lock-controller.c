@@ -14,7 +14,9 @@
  * ComboLock solution (c) the above-named students
  */
 
+//#include <stdlib.h>
 #include <CowPi.h>
+#include <stdio.h>
 #include "boards/rp2040.h"
 #include "display.h"
 #include "interrupt_support.h"
@@ -34,16 +36,17 @@ static volatile uint8_t working_combination[3];
 static volatile uint8_t combo_passes[3];
 
 void send_alarm() {
-	cowpi_timer_t *timer = (cowpi_timer_t *) 0x40054000;
+	cowpi_timer_t volatile *timer = (cowpi_timer_t *) 0x40054000;
 	// while(1) {
 		display_string(0, "ALERT");
 		display_string(1, "");
+		refresh_display();
 		uint32_t then = timer->raw_lower_word;
-		while (timer->raw_lower_word - then < 2) {}
+		while (timer->raw_lower_word - then < 250000) {}
 		cowpi_illuminate_left_led();
 		cowpi_deluminate_right_led();
 		then = timer->raw_lower_word;
-		while(timer->raw_lower_word - then < 2) {}
+		while(timer->raw_lower_word - then < 250000) {}
 		cowpi_illuminate_right_led();
 		cowpi_deluminate_left_led();
 	// }
@@ -57,6 +60,7 @@ void display_lock() {
 	} else if (system_status == UNLOCKED) {
 		display_string(0, "OPEN");
 	} else if (system_status == ALARMED) {
+		refresh_display();
 		send_alarm();
 	} else {
 		display_string(0, "  -  -  ");
