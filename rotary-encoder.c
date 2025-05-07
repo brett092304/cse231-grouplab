@@ -35,7 +35,6 @@ static void handle_quadrature_interrupt();
 
 void initialize_rotary_encoder() {
     cowpi_set_pullup_input_pins((1 << A_WIPER_PIN) | (1 << B_WIPER_PIN));
-    ;
     register_pin_ISR((1 << A_WIPER_PIN) | (1 << B_WIPER_PIN), handle_quadrature_interrupt);
 	state = HIGH_HIGH;
 }

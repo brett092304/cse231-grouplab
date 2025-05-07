@@ -159,22 +159,22 @@ void reset_lock() {
 
 void handle_left_button(void) {
 	if (cowpi_left_button_is_pressed()) {
-		bool is_valid_combination = false;
-		if (working_combination[0] == combination[0] &&
-			working_combination[1] == combination[1] &&
-			working_combination[2] == combination[2]) {
-			is_valid_combination = true;
-		}
+		if(system_status == LOCKED && started == true) {
+			bool is_valid_combination = false;
+			if (working_combination[0] == combination[0] &&
+				working_combination[1] == combination[1] &&
+				working_combination[2] == combination[2]) {
+				is_valid_combination = true;
+			}
 
-		if (!(combo_passes[0] > 2 && combo_passes[1] == 2 && combo_passes[2] == 1)) {
-			is_valid_combination = false;
-		}
+			if (!(combo_passes[0] > 2 && combo_passes[1] == 2 && combo_passes[2] == 1)) {
+				is_valid_combination = false;
+			}
 
-		if (is_valid_combination) {
-			system_status = UNLOCKED;
-			for (int i = 0; i < 3; i++) {working_combination[i] = 0; combo_passes[i] = 0;}
-		} else {
-			if (system_status == LOCKED) {
+			if (is_valid_combination) {
+				system_status = UNLOCKED;
+				for (int i = 0; i < 3; i++) {working_combination[i] = 0; combo_passes[i] = 0;}
+			} else {
 				warnings++;
 				char buffer[16];
 				sprintf(buffer, "bad try %d", warnings);
@@ -182,11 +182,12 @@ void handle_left_button(void) {
 				blink_LEDs_twice();
 				reset_lock();
 			}
-		}
 	
-		if (warnings > 2) {
-			system_status = ALARMED;
+			if (warnings > 2) {
+				system_status = ALARMED;
+			}
 		}
+		
 	}
 	if (cowpi_left_button_is_pressed() && cowpi_right_button_is_pressed()) {
 		system_status = LOCKED;
